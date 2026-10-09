@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智慧科学课堂教学与互动套件</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js for Growth Curve -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS for Excel Import/Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Noto Sans TC / SC & Zen Maru Gothic -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Sans+TC:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sprout: {
+              50: '#f2f9f1',
+              100: '#e1f2e0',
+              200: '#c5e6c4',
+              300: '#9bd299',
+              400: '#6bb768',
+              500: '#489c45',
+              600: '#367e34',
+              700: '#2c642b',
+              800: '#265026',
+              900: '#204320'
+            }
+          },
+          fontFamily: {
+            sans: ['Noto Sans SC', 'Noto Sans TC', 'sans-serif'],
+            hk: ['Noto Sans TC', 'Zen Maru Gothic', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      user-select: none;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    #virtualRuler {
+      touch-action: none;
+      cursor: grab;
+    }
+    #virtualRuler:active {
+      cursor: grabbing;
+    }
+    @keyframes waterDrop {
+      0% { transform: translateY(-20px); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(40px); opacity: 0; }
+    }
+    .water-drop {
+      animation: waterDrop 0.8s ease-in-out infinite;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; color: black !important; }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-300">
+
+  <!-- ==================== 1. 门户引导页 (PORTAL VIEW) ==================== -->
+  <div id="viewPortal" class="flex-1 flex flex-col justify-between p-6 sm:p-12 relative overflow-hidden">
+    <!-- 背景流光装饰 -->
+    <div class="absolute -top-32 -left-32 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+    <header class="max-w-7xl mx-auto w-full flex items-center justify-between z-10">
+      <div class="flex items-center gap-3">
+        <span class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-emerald-500/30">🌱</span>
+        <div>
+          <h1 class="text-xl font-black text-white tracking-wide">智慧科学课堂教学大屏</h1>
+          <p class="text-xs text-slate-400">Hong Kong Primary Science & Smart Classroom Suite</p>
+        </div>
+      </div>
+      <button onclick="toggleFullScreen()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition flex items-center gap-2">
+        <i class="fa-solid fa-expand"></i> 全屏模式 (F11)
+      </button>
+    </header>
+
+    <main class="max-w-5xl mx-auto w-full py-10 z-10">
+      <div class="text-center mb-10">
+        <span class="px-3.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-bold tracking-wider uppercase mb-3 inline-block">
+          Classroom Command Center
+        </span>
+        <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight mb-3">
+          请选择要进入的教学模块
+        </h2>
+        <p class="text-slate-400 text-base max-w-xl mx-auto">
+          集成本地实验模拟与课堂互动抽答工具，大屏投影高清适配，点击即可无缝进入。
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- 卡片 1: 绿豆成长实验 (内置单页) -->
+        <div onclick="switchAppView('science')" class="group relative bg-gradient-to-b from-slate-800 to-slate-850 hover:to-slate-800 border-2 border-slate-700 hover:border-emerald-500 p-8 rounded-3xl cursor-pointer transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-emerald-500/20 flex flex-col justify-between">
+          <div class="absolute top-5 right-5 w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm font-bold group-hover:bg-emerald-500 group-hover:text-white transition">
+            <i class="fa-solid fa-arrow-right"></i>
+          </div>
+          <div>
+            <div class="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition duration-300">
+              🌱
+            </div>
+            <span class="text-xs font-bold text-emerald-400 tracking-wider uppercase">内建课程实验室</span>
+            <h3 class="text-2xl font-black text-white mt-1 mb-2 group-hover:text-emerald-300 transition">Science Curriculum</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              绿豆生长模拟与自主观察册：支持 1-10 天植物演变、光照水分调节、虚拟刻度尺测高、真叶记录与生长趋势曲线图。
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
+            <span>小学科学探究实验</span>
+            <span class="text-emerald-400 font-bold group-hover:underline">立即开启实验 →</span>
+          </div>
+        </div>
+
+        <!-- 卡片 2: 课堂互动大屏工具 -->
+        <div onclick="switchAppView('picker')" class="group relative bg-gradient-to-b from-slate-800 to-slate-850 hover:to-slate-800 border-2 border-slate-700 hover:border-indigo-500 p-8 rounded-3xl cursor-pointer transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20 flex flex-col justify-between">
+          <div class="absolute top-5 right-5 w-8 h-8 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-sm font-bold group-hover:bg-indigo-500 group-hover:text-white transition">
+            <i class="fa-solid fa-arrow-right"></i>
+          </div>
+          <div>
+            <div class="w-16 h-16 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition duration-300">
+              🎯
+            </div>
+            <span class="text-xs font-bold text-indigo-400 tracking-wider uppercase">互动评价大屏</span>
+            <h3 class="text-2xl font-black text-white mt-1 mb-2 group-hover:text-indigo-300 transition">课堂抽答与积分排行榜</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              Excel导入学号与名单、大字号转盘滚动、随时手动停止、记录随堂问题与得分评语，生成实时积分排行榜并支持导出。
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
+            <span>含停止按钮 / 排行榜导出</span>
+            <span class="text-indigo-400 font-bold group-hover:underline">进入互动工具 →</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="max-w-7xl mx-auto w-full text-center text-xs text-slate-500 z-10">
+      智慧课堂单页应用 • 适配教室触控一体机与投影设备
+    </footer>
+  </div>
+
+
+  <!-- ==================== 2. 绿豆成长实验 (SCIENCE CURRICULUM VIEW) ==================== -->
+  <div id="viewScience" class="hidden flex-1 flex-col bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 text-slate-800">
+    <!-- 顶部导航 -->
+    <header class="bg-white/90 backdrop-blur-md sticky top-0 z-40 border-b border-sprout-200 shadow-sm no-print">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center space-x-3">
+          <button onclick="switchAppView('portal')" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5" title="返回门户">
+            <i class="fa-solid fa-arrow-left"></i> 返回主页
+          </button>
+          <div class="w-10 h-10 bg-sprout-500 rounded-2xl flex items-center justify-center text-white shadow-md shadow-sprout-200 text-xl font-bold">
+            🌱
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="bg-sprout-100 text-sprout-800 text-xs px-2.5 py-0.5 rounded-full font-bold border border-sprout-300">香港小学科学科专题</span>
+              <span class="text-xs text-slate-500 hidden sm:inline">植物的生长与生命周期</span>
+            </div>
+            <h1 class="text-lg font-extrabold text-slate-800 tracking-tight">绿豆成长实验室与自主观察册</h1>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <button onclick="switchAppView('picker')" class="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs shadow-sm transition flex items-center gap-1.5">
+            <i class="fa-solid fa-bullhorn"></i> 切换至抽答工具
+          </button>
+          <button onclick="toggleScienceMute()" class="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition" title="开关音效">
+            <i id="sciAudioIcon" class="fa-solid fa-volume-high text-base"></i>
+          </button>
+          <button onclick="openKnowledgeModal()" class="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-xs shadow-sm transition flex items-center gap-1.5">
+            <i class="fa-solid fa-lightbulb"></i> 科学锦囊
+          </button>
+          <button onclick="window.print()" class="px-3.5 py-2 rounded-xl bg-sprout-600 hover:bg-sprout-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-1.5">
+            <i class="fa-solid fa-print"></i> 打印手稿
+          </button>
+          <button onclick="toggleFullScreen()" class="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition" title="全屏">
+            <i class="fa-solid fa-expand text-base"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主实验工作区 -->
+    <main class="max-w-7xl mx-auto p-4 sm:p-6 w-full flex-1">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- 左侧：动态生长模拟器 (7 Cols) -->
+        <section class="lg:col-span-7 flex flex-col space-y-4">
+          <div class="bg-white rounded-3xl p-5 shadow-lg border border-sprout-100 relative overflow-hidden flex flex-col">
+            <!-- 状态信息条 -->
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-2">
+              <div class="flex items-center gap-3">
+                <span class="text-sm font-bold text-slate-500">种植进度：</span>
+                <span id="currentDayBadge" class="px-3.5 py-1 rounded-full text-sm font-black bg-sprout-500 text-white shadow-sm">
+                  第 1 天 (Day 1)
+                </span>
+              </div>
+              <div class="flex items-center gap-2 text-xs font-semibold">
+                <span id="envMediumTag" class="px-2.5 py-1 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 flex items-center gap-1">
+                  <i class="fa-solid fa-cubes-stacked"></i> 湿棉花
+                </span>
+                <span id="envSunTag" class="px-2.5 py-1 bg-yellow-50 text-yellow-800 rounded-lg border border-yellow-200 flex items-center gap-1">
+                  <i class="fa-solid fa-sun text-yellow-500"></i> 充足阳光
+                </span>
+              </div>
+            </div>
+
+            <!-- 阶段描述卡 -->
+            <div id="stageDescriptor" class="bg-emerald-50 text-emerald-900 border border-emerald-200 rounded-2xl p-3 my-2 text-xs sm:text-sm flex items-start gap-2.5">
+              <i class="fa-solid fa-seedling text-sprout-600 text-base mt-0.5"></i>
+              <div>
+                <strong id="stageTitle" class="font-bold">种子浸水吸胀期：</strong>
+                <span id="stageDescText">绿豆种子吸收足够水分，体积膨胀，种皮渐渐软化，准备发芽。</span>
+              </div>
+            </div>
+
+            <!-- SVG 生态模拟视窗 -->
+            <div id="terrariumContainer" class="relative w-full h-[380px] sm:h-[420px] bg-gradient-to-b from-sky-100 via-blue-50 to-amber-50 rounded-2xl border-2 border-dashed border-sprout-200 overflow-hidden flex items-end justify-center">
+              
+              <!-- 太阳 -->
+              <div id="skySun" class="absolute top-5 right-6 transition-all duration-700">
+                <div class="w-12 h-12 rounded-full bg-amber-400 shadow-[0_0_35px_rgba(251,191,36,0.85)] flex items-center justify-center text-amber-100 text-2xl font-bold">
+                  ☀️
+                </div>
+              </div>
+
+              <!-- 阴暗遮罩 -->
+              <div id="shadeOverlay" class="absolute inset-0 bg-slate-900/40 pointer-events-none transition-opacity duration-500 opacity-0 z-10 flex items-center justify-center">
+                <span class="bg-black/60 text-white text-xs px-3 py-1 rounded-full">阴暗无光照环境</span>
+              </div>
+
+              <!-- 浇水雨滴特效 -->
+              <div id="rainEffect" class="absolute inset-0 pointer-events-none hidden z-20 flex justify-around">
+                <div class="text-blue-400 text-xl water-drop">💧</div>
+                <div class="text-blue-400 text-xl water-drop" style="animation-delay: 0.2s">💧</div>
+                <div class="text-blue-400 text-xl water-drop" style="animation-delay: 0.4s">💧</div>
+                <div class="text-blue-400 text-xl water-drop" style="animation-delay: 0.1s">💧</div>
+              </div>
+
+              <!-- 植物 SVG -->
+              <div class="relative w-full h-full flex items-end justify-center pointer-events-none">
+                <svg id="plantSvg" viewBox="0 0 500 450" class="w-full h-full z-10" preserveAspectRatio="xMidYMid meet">
+                  <defs>
+                    <linearGradient id="cottonGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#ffffff"/>
+                      <stop offset="100%" stop-color="#d1d5db"/>
+                    </linearGradient>
+                    <linearGradient id="soilGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#854d0e"/>
+                      <stop offset="100%" stop-color="#543007"/>
+                    </linearGradient>
+                  </defs>
+
+                  <g id="groundGroup">
+                    <path d="M 120 425 Q 250 445 380 425 L 360 445 Q 250 455 140 445 Z" fill="#94a3b8" opacity="0.6"/>
+                    <rect id="mediumRect" x="140" y="380" width="220" height="50" rx="15" fill="url(#cottonGrad)" stroke="#cbd5e1" stroke-width="2"/>
+                    <text id="mediumLabel" x="250" y="412" text-anchor="middle" font-size="12" fill="#64748b" font-weight="bold">湿棉花床</text>
+                  </g>
+
+                  <g id="rootsGroup" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round" fill="none"></g>
+
+                  <g id="beanBodyGroup" transform="translate(0,0)">
+                    <ellipse id="seedCoat" cx="250" cy="380" rx="14" ry="10" fill="#2d6a4f" stroke="#1b4332" stroke-width="1.5" />
+                    <ellipse id="seedHilum" cx="249" cy="378" rx="4" ry="2" fill="#e9d8a6" />
+                  </g>
+
+                  <path id="stemPath" d="M 250 380 Q 250 380 250 380" stroke="#74c69d" stroke-width="6" stroke-linecap="round" fill="none" />
+
+                  <g id="cotyledonsGroup" opacity="0">
+                    <path id="cotyLeft" d="M 250 250 Q 230 240 232 255 Q 240 265 250 255 Z" fill="#b7e4c7" stroke="#52b788" stroke-width="1.5"/>
+                    <path id="cotyRight" d="M 250 250 Q 270 240 268 255 Q 260 265 250 255 Z" fill="#b7e4c7" stroke="#52b788" stroke-width="1.5"/>
+                  </g>
+
+                  <g id="foliageGroup"></g>
+                </svg>
+              </div>
+
+              <!-- 拖曳测量尺 -->
+              <div id="virtualRuler" class="absolute left-6 top-8 w-16 bg-amber-100/90 hover:bg-amber-100 backdrop-blur-sm border-2 border-amber-400 rounded-lg shadow-xl select-none z-30 transition-transform active:scale-95" title="按住拖动刻度尺测高">
+                <div class="bg-amber-400 text-amber-950 font-black text-center text-[10px] py-1 uppercase tracking-wider flex items-center justify-center gap-1">
+                  <i class="fa-solid fa-arrows-up-down text-[8px]"></i> 刻度尺 (cm)
+                </div>
+                <div class="relative h-[280px] w-full flex flex-col justify-between py-2 text-[9px] font-mono text-amber-900 border-r-2 border-amber-500">
+                  <div class="flex items-center px-1 justify-between"><span class="w-4 h-0.5 bg-amber-800"></span><span class="font-bold">16</span></div>
+                  <div class="flex items-center px-1 justify-between"><span class="w-2.5 h-0.5 bg-amber-600"></span><span>14</span></div>
+                  <div class="flex items-center px-1 justify-between"><span class="w-4 h-0.5 bg-amber-800"></span><span class="font-bold">12</span></div>
+                  <div class="flex items-center px-1 justify-between"><span class="w-2.5 h-0.5 bg-amber-600"></span><span>10</span></div>
+                  <div class="flex items-center px-1 justify-between"><span class="w-4 h-0.5 bg-amber-800"></span><span class="font-bold">8</span></div>
+                  <div class="flex items-center px-1 justify-between"><span class="w-2.5 h-0.5 bg-amber-600"></span><span>6</span></div>
+                  <div class="flex items-center px-1 justify-between"><span class="w-4 h-0.5 bg-amber-800"></span><span class="font-bold">4</span></div>
+                  <div class="flex items-center px-1 justify-between"><span class="w-2.5 h-0.5 bg-amber-600"></span><span>2</span></div>
+                  <div class="flex items-center px-1 justify-between"><span class="w-4 h-0.5 bg-amber-800"></span><span class="font-bold">0</span></div>
+                </div>
+                <div class="bg-amber-200/80 text-amber-900 text-[9px] text-center py-0.5 font-bold">可拖曳</div>
+              </div>
+
+              <!-- 悬浮读数 -->
+              <div class="absolute top-4 left-24 z-20 flex flex-col gap-1.5">
+                <div class="bg-white/90 backdrop-blur-md px-3 py-1 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
+                  <span class="text-xs text-slate-500">高度:</span>
+                  <span id="hudHeightVal" class="text-sm font-black text-sprout-700">0.0 cm</span>
+                </div>
+                <div class="bg-white/90 backdrop-blur-md px-3 py-1 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
+                  <span class="text-xs text-slate-500">真叶:</span>
+                  <span id="hudLeafVal" class="text-sm font-black text-emerald-600">0 片</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 控制滑杆与环境切换 -->
+            <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col gap-3">
+              <div class="flex items-center justify-between gap-3">
+                <button onclick="changeSciDay(-1)" id="prevSciDayBtn" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition disabled:opacity-40">
+                  <i class="fa-solid fa-backward-step mr-1"></i> 前一天
+                </button>
+                <div class="flex-1 flex items-center gap-3 px-2">
+                  <span class="text-xs font-bold text-slate-400">Day 1</span>
+                  <input id="sciDaySlider" type="range" min="1" max="10" value="1" step="1" oninput="onSciSliderChange(this.value)" class="w-full accent-sprout-600 h-2 bg-slate-200 rounded-lg cursor-pointer">
+                  <span class="text-xs font-bold text-slate-400">Day 10</span>
+                </div>
+                <button onclick="changeSciDay(1)" id="nextSciDayBtn" class="px-4 py-1.5 rounded-xl bg-sprout-600 hover:bg-sprout-700 text-white font-bold text-xs shadow-md shadow-sprout-200 transition disabled:opacity-40">
+                  下一天 <i class="fa-solid fa-forward-step ml-1"></i>
+                </button>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2">
+                <button onclick="triggerWatering()" class="p-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center gap-1 border border-blue-200 active:scale-95 transition">
+                  <i class="fa-solid fa-shower text-blue-500"></i> 立即浇水 💧
+                </button>
+                <button onclick="toggleSunlight()" id="sunToggleBtn" class="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs flex items-center justify-center gap-1 border border-amber-200 active:scale-95 transition">
+                  <i class="fa-solid fa-sun text-amber-500"></i> <span id="sunBtnText">充足阳光</span>
+                </button>
+                <button onclick="toggleMedium()" id="mediumToggleBtn" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs flex items-center justify-center gap-1 border border-stone-300 active:scale-95 transition">
+                  <i class="fa-solid fa-seedling text-stone-600"></i> <span id="mediumBtnText">介质: 湿棉花</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 快速填表卡片 -->
+          <div class="bg-gradient-to-r from-sprout-50 to-emerald-100/70 p-3.5 rounded-2xl border border-sprout-200 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-xl bg-white text-sprout-600 flex items-center justify-center shadow-sm text-base font-bold">📝</div>
+              <div>
+                <h4 class="font-bold text-xs text-slate-800">完成今日观察了吗？</h4>
+                <p class="text-[11px] text-slate-500">将第 <span id="promptDay" class="font-bold text-sprout-700">1</span> 天的高度与叶片填入科学日志。</p>
+              </div>
+            </div>
+            <button onclick="syncToForm()" class="px-3.5 py-1.5 bg-sprout-600 hover:bg-sprout-700 text-white text-xs font-bold rounded-xl shadow-sm transition">
+              填入记录表
+            </button>
+          </div>
+        </section>
+
+        <!-- 右侧：记录册与图表 (5 Cols) -->
+        <section class="lg:col-span-5 flex flex-col space-y-4">
+          <div class="bg-white rounded-3xl p-5 shadow-lg border border-sprout-100 flex flex-col flex-1">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h2 class="font-black text-sm text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-book-open-reader text-sprout-600"></i> 科学观察记录册
+              </h2>
+              <div class="flex space-x-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                <button id="tabTableBtn" onclick="switchSciTab('table')" class="px-2.5 py-1 rounded-lg bg-white shadow-xs text-sprout-700">记录表</button>
+                <button id="tabChartBtn" onclick="switchSciTab('chart')" class="px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-700">生长曲线图</button>
+              </div>
+            </div>
+
+            <!-- 表单填写 -->
+            <div id="observationFormSection" class="pt-3 flex flex-col space-y-2.5">
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">观察天数</label>
+                  <select id="formDaySelect" class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl p-2 text-slate-700 focus:outline-none"></select>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">测得高度 (cm)</label>
+                  <input id="formHeightInput" type="number" step="0.1" min="0" max="30" value="0.0" class="w-full text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl p-2 text-slate-700">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">叶片数量 (片)</label>
+                  <input id="formLeavesInput" type="number" step="1" min="0" max="20" value="0" class="w-full text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl p-2 text-slate-700">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">生长环境</label>
+                  <input id="formConditionInput" type="text" readonly value="充足阳光 / 适量水分" class="w-full text-xs font-medium bg-slate-100 border border-slate-200 rounded-xl p-2 text-slate-500">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">观察笔记 (Morphology & Remarks)</label>
+                <textarea id="formNotesInput" rows="2" placeholder="记录种皮、根毛、子叶及茎部生长特征..." class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2 text-slate-700 resize-none"></textarea>
+              </div>
+
+              <div class="flex items-center gap-2 pt-1">
+                <button onclick="saveSciLogEntry()" class="flex-1 py-2 bg-sprout-600 hover:bg-sprout-700 text-white rounded-xl font-bold text-xs shadow-md shadow-sprout-200 transition flex items-center justify-center gap-1.5">
+                  <i class="fa-solid fa-floppy-disk"></i> 储存今日记录
+                </button>
+                <button onclick="resetSciLogs()" class="px-3 py-2 bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-xl font-bold text-xs transition" title="重设资料">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- 数据表 -->
+            <div id="tableView" class="mt-3 flex-1 flex flex-col">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold text-slate-500">日记列表 (<span id="recordCount">0</span>/10)</span>
+                <button onclick="exportSciCSV()" class="text-xs text-sprout-700 hover:text-sprout-900 font-bold flex items-center gap-1">
+                  <i class="fa-solid fa-file-excel"></i> 导出 CSV
+                </button>
+              </div>
+              <div class="overflow-y-auto max-h-[180px] rounded-xl border border-slate-100 custom-scroll">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-50 sticky top-0 text-slate-500 font-bold border-b border-slate-100">
+                    <tr>
+                      <th class="p-2">天数</th>
+                      <th class="p-2">高度</th>
+                      <th class="p-2">叶片</th>
+                      <th class="p-2">笔记</th>
+                      <th class="p-2 text-center">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="logTableBody" class="divide-y divide-slate-100 text-slate-600"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 图表视窗 -->
+            <div id="chartView" class="mt-3 flex-1 hidden flex-col">
+              <div class="w-full h-[220px]">
+                <canvas id="growthChart"></canvas>
+              </div>
+              <p class="text-[10px] text-slate-400 text-center mt-1">提示：高度随时间加速增长，体现植物营养生长期的特性。</p>
+            </div>
+          </div>
+
+          <!-- 成就卡片 -->
+          <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div id="achievementBadge" class="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center text-xl">🌱</div>
+              <div>
+                <div class="text-xs font-extrabold text-amber-800" id="badgeTitle">小小植物观察员</div>
+                <div class="text-[10px] text-slate-500" id="badgeDesc">连续完成 3 天记录即可晋级！</div>
+              </div>
+            </div>
+            <span id="badgeLevelTag" class="px-2 py-0.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-black">
+              Lv. 1 初级
+            </span>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+
+  <!-- ==================== 3. 课堂抽答与积分排行榜 (PICKER & LEADERBOARD VIEW) ==================== -->
+  <div id="viewPicker" class="hidden flex-1 flex-col bg-slate-900 text-slate-100">
+    <!-- 顶部导航条 -->
+    <header class="bg-slate-850 border-b border-slate-800 sticky top-0 z-40 px-4 sm:px-8 py-3">
+      <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <button onclick="switchAppView('portal')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-arrow-left"></i> 返回主页
+          </button>
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-base">🎯</span>
+            <h1 class="text-lg font-black tracking-wide hidden sm:inline">课堂互动大屏</h1>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+          <button onclick="switchAppView('science')" class="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white text-xs font-bold transition flex items-center gap-1.5">
+            🌱 切换至科学实验室
+          </button>
+          <button onclick="toggleFullScreen()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition" title="全屏">
+            <i class="fa-solid fa-expand text-sm"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 sm:p-6 w-full flex-1 flex flex-col gap-6">
+      <!-- 上半区：名单导入与抽选操作 + 问答打分 -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- 左侧：名单导入与管理 (4 Cols) -->
+        <section class="lg:col-span-4 bg-slate-850 p-5 rounded-3xl border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+              <h2 class="text-sm font-black flex items-center gap-2 text-indigo-400">
+                <i class="fa-solid fa-file-excel"></i> 学生名单管理
+              </h2>
+              <span id="studentCountBadge" class="text-xs bg-indigo-500/20 text-indigo-300 px-2.5 py-0.5 rounded-full font-bold">
+                共 0 人
+              </span>
+            </div>
+
+            <!-- Excel 上传区 -->
+            <div class="space-y-2.5 mb-4">
+              <label class="block text-xs text-slate-400 font-bold">导入名单表格 (支持 .xlsx, .xls, .csv)</label>
+              <div class="flex items-center gap-2">
+                <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelUpload(event)">
+                <button onclick="document.getElementById('excelFileInput').click()" class="flex-1 py-2.5 px-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30">
+                  <i class="fa-solid fa-upload"></i> 选择 Excel 文件导入
+                </button>
+                <button onclick="downloadSampleExcel()" class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold border border-slate-700 transition" title="下载标准示例模板">
+                  <i class="fa-solid fa-download"></i> 模板
+                </button>
+              </div>
+              <p class="text-[11px] text-slate-500">提示：表格包含【学号】和【姓名】两列最佳；若只有姓名将自动编号。</p>
+            </div>
+
+            <!-- 名单预览与文本编辑备用 -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold text-slate-400">当前班级名单预览：</span>
+                <button onclick="loadSampleClass()" class="text-[11px] text-indigo-400 hover:underline">加载示例班级(30人)</button>
+              </div>
+              <div id="rosterPreviewList" class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 max-h-48 overflow-y-auto space-y-1 text-xs custom-scroll">
+                <div class="text-center text-slate-600 py-6">暂无名单，请上传 Excel 或加载示例班级</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 不重复抽取开关与重置 -->
+          <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+            <label class="flex items-center gap-2 text-xs font-bold text-slate-300 cursor-pointer">
+              <input type="checkbox" id="noRepeatToggle" checked class="w-4 h-4 accent-indigo-600 rounded">
+              <span>不重复抽取</span>
+            </label>
+            <div class="flex items-center gap-2">
+              <span id="remainCountText" class="text-xs text-slate-400">剩余: 0 人</span>
+              <button onclick="resetRosterPool()" class="text-xs px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700">
+                重置轮次
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 中间：大屏抽答滚动机 (5 Cols) -->
+        <section class="lg:col-span-5 bg-slate-850 p-6 rounded-3xl border border-slate-800 flex flex-col justify-between items-center text-center relative overflow-hidden">
+          
+          <div class="w-full flex items-center justify-between text-xs text-slate-400 pb-2">
+            <span>课堂随机点名</span>
+            <span class="text-indigo-400"><i class="fa-solid fa-keyboard"></i> 按空格键快速启动/停止</span>
+          </div>
+
+          <!-- 抽答巨幅大屏框 -->
+          <div class="my-6 w-full py-12 px-4 bg-gradient-to-b from-slate-900 to-slate-950 rounded-2xl border-2 border-indigo-500/40 shadow-inner flex flex-col items-center justify-center min-h-[220px]">
+            <div id="pickIdDisplay" class="text-sm sm:text-base font-mono tracking-widest text-indigo-400 mb-2 font-bold opacity-80">
+              NO. 00
+            </div>
+            <div id="pickNameDisplay" class="text-4xl sm:text-6xl font-black text-white tracking-wider animate-pulse">
+              准备开始
+            </div>
+            <div id="pickStatusTag" class="mt-4 text-xs px-3 py-1 bg-slate-800 text-slate-400 rounded-full font-bold">
+              等待抽选指令
+            </div>
+          </div>
+
+          <!-- 操作按钮组：开始与停止 -->
+          <div class="w-full grid grid-cols-2 gap-4">
+            <button id="startRollBtn" onclick="startRolling()" class="py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-lg shadow-lg shadow-emerald-600/30 transition transform active:scale-95 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-play"></i> 开始抽选
+            </button>
+            <button id="stopRollBtn" onclick="stopRolling()" disabled class="py-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-black text-lg shadow-lg shadow-rose-600/30 transition transform active:scale-95 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
+              <i class="fa-solid fa-hand"></i> 停止抽选
+            </button>
+          </div>
+        </section>
+
+        <!-- 右侧：问答记录与打分面板 (3 Cols) -->
+        <section class="lg:col-span-3 bg-slate-850 p-5 rounded-3xl border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+              <h2 class="text-sm font-black flex items-center gap-2 text-amber-400">
+                <i class="fa-solid fa-star"></i> 课堂问答与得分
+              </h2>
+            </div>
+
+            <!-- 当前选中的学生卡 -->
+            <div class="bg-slate-900 p-3.5 rounded-2xl border border-slate-800 mb-3 text-center">
+              <div class="text-[11px] text-slate-500">当前互动学生</div>
+              <div id="activeStudentName" class="text-xl font-black text-white my-1">尚未选定</div>
+              <div id="activeStudentId" class="text-xs text-indigo-400 font-mono">学号: --</div>
+            </div>
+
+            <!-- 问题输入 -->
+            <div class="space-y-2 mb-3">
+              <label class="block text-xs text-slate-400 font-bold">回答的问题内容：</label>
+              <input type="text" id="questionInput" placeholder="输入问题或课堂表现..." class="w-full text-xs bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500">
+              <div class="flex flex-wrap gap-1">
+                <button onclick="fillPresetQuestion('随堂概念提问')" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded">概念提问</button>
+                <button onclick="fillPresetQuestion('实验现象分析')" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded">实验分析</button>
+                <button onclick="fillPresetQuestion('主动举手发言')" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded">主动发言</button>
+              </div>
+            </div>
+
+            <!-- 赋分与加分按钮 -->
+            <div class="space-y-1.5">
+              <label class="block text-xs text-slate-400 font-bold">本次得分评定：</label>
+              <div class="grid grid-cols-4 gap-1.5">
+                <button onclick="setScoreValue(1)" class="score-quick-btn py-1.5 bg-slate-800 hover:bg-indigo-600 rounded-lg text-xs font-bold text-white transition">+1</button>
+                <button onclick="setScoreValue(2)" class="score-quick-btn py-1.5 bg-slate-800 hover:bg-indigo-600 rounded-lg text-xs font-bold text-white transition">+2</button>
+                <button onclick="setScoreValue(3)" class="score-quick-btn py-1.5 bg-slate-800 hover:bg-indigo-600 rounded-lg text-xs font-bold text-white transition">+3</button>
+                <button onclick="setScoreValue(5)" class="score-quick-btn py-1.5 bg-slate-800 hover:bg-indigo-600 rounded-lg text-xs font-bold text-white transition">+5</button>
+              </div>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-xs text-slate-400">分值:</span>
+                <input id="scoreInput" type="number" value="2" class="w-16 text-center text-xs font-bold bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-white">
+                <button onclick="setScoreValue(-1)" class="text-xs px-2 py-1.5 bg-rose-950 text-rose-300 hover:bg-rose-900 rounded-lg border border-rose-800">-1分</button>
+              </div>
+            </div>
+          </div>
+
+          <button id="saveScoreBtn" onclick="saveActiveAnswerScore()" disabled class="mt-4 w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-amber-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/20 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-circle-check"></i> 保存记录与加分
+          </button>
+        </section>
+      </div>
+
+      <!-- 下半区：得分排行榜与抽答历史纪录 (LEADERBOARD) -->
+      <section class="bg-slate-850 p-6 rounded-3xl border border-slate-800 flex flex-col gap-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center font-bold text-base">
+              🏆
+            </div>
+            <div>
+              <h3 class="text-base font-black text-white">课堂积分排行榜 (Leaderboard)</h3>
+              <p class="text-xs text-slate-400">根据问答得分实时降序排列</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="exportLeaderboardExcel()" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5">
+              <i class="fa-solid fa-file-excel"></i> 导出排行榜 Excel
+            </button>
+            <button onclick="confirmResetScores()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-900 text-slate-400 hover:text-rose-200 font-bold text-xs border border-slate-700 transition">
+              清空积分
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- 积分榜大列表 (7 Cols) -->
+          <div class="lg:col-span-7">
+            <div class="overflow-x-auto rounded-2xl border border-slate-800">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-900 text-slate-400 font-bold border-b border-slate-800">
+                  <tr>
+                    <th class="p-3 text-center w-16">排名</th>
+                    <th class="p-3">学号</th>
+                    <th class="p-3">姓名</th>
+                    <th class="p-3 text-center">回答次数</th>
+                    <th class="p-3 text-right">累计总分</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboardTbody" class="divide-y divide-slate-800 text-slate-300">
+                  <tr><td colspan="5" class="p-8 text-center text-slate-600">导入名单后开始抽答，即可生成榜单！</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 抽选明细历史流水 (5 Cols) -->
+          <div class="lg:col-span-5 flex flex-col">
+            <span class="text-xs font-bold text-slate-400 mb-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-clock-rotate-left"></i> 本节课问答详细流水记录
+            </span>
+            <div id="answerHistoryList" class="bg-slate-900 border border-slate-800 rounded-2xl p-3 max-h-72 overflow-y-auto space-y-2 text-xs custom-scroll flex-1">
+              <div class="text-center text-slate-600 py-8">尚无问答明细记录</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+
+  <!-- ==================== 4. 科学锦囊知识库弹窗 ==================== -->
+  <div id="knowledgeModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white max-w-lg w-full rounded-3xl p-6 shadow-2xl border border-sprout-200 max-h-[85vh] overflow-y-auto text-slate-800">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
+          <span class="text-amber-500">💡</span> 香港小学科学科：绿豆知识库
+        </h3>
+        <button onclick="closeKnowledgeModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center font-bold">✕</button>
+      </div>
+
+      <div class="space-y-4 my-4 text-xs sm:text-sm text-slate-600 leading-relaxed">
+        <div class="p-3 bg-sprout-50 rounded-2xl border border-sprout-200">
+          <h4 class="font-bold text-sprout-800 mb-1">1. 种子萌发的三大主要条件</h4>
+          <p>种子在发芽时<strong>不需要阳光</strong>，但必须具备：</p>
+          <ul class="list-disc list-inside mt-1 space-y-0.5 text-sprout-900">
+            <li><strong>水分：</strong> 软化种皮，激活种子内部酵素。</li>
+            <li><strong>空气（氧气）：</strong> 提供种子呼吸作用进行能量释放。</li>
+            <li><strong>适宜温度：</strong> 温暖的环境最利于生长（约 20°C - 25°C）。</li>
+          </ul>
+        </div>
+
+        <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200">
+          <h4 class="font-bold text-amber-800 mb-1">2. 绿豆各构造功能</h4>
+          <ul class="list-disc list-inside space-y-1 text-amber-900">
+            <li><strong>种皮：</strong> 保护内部胚构造。</li>
+            <li><strong>子叶（两片）：</strong> 储存养分；真叶长出前提供能量，随后枯萎。</li>
+            <li><strong>胚根：</strong> 最先突破种皮向下生长形成根部。</li>
+            <li><strong>真叶：</strong> 向上伸出变绿，进行<strong>光合作用</strong>制造养分。</li>
+          </ul>
+        </div>
+      </div>
+
+      <button onclick="closeKnowledgeModal()" class="w-full py-2.5 rounded-xl bg-sprout-600 hover:bg-sprout-700 text-white font-bold text-sm transition">
+        明白，回到实验！
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ==================== JAVASCRIPT 全局控制器 ==================== -->
+  <script>
+    /* ---------------- 全局多页面切换与全屏 ---------------- */
+    function switchAppView(viewName) {
+      document.getElementById('viewPortal').classList.add('hidden');
+      document.getElementById('viewScience').classList.add('hidden');
+      document.getElementById('viewScience').classList.remove('flex');
+      document.getElementById('viewPicker').classList.add('hidden');
+      document.getElementById('viewPicker').classList.remove('flex');
+
+      if (viewName === 'portal') {
+        document.getElementById('viewPortal').classList.remove('hidden');
+      } else if (viewName === 'science') {
+        document.getElementById('viewScience').classList.remove('hidden');
+        document.getElementById('viewScience').classList.add('flex');
+        setTimeout(() => { if (sciChartInstance) sciChartInstance.resize(); }, 100);
+      } else if (viewName === 'picker') {
+        document.getElementById('viewPicker').classList.remove('hidden');
+        document.getElementById('viewPicker').classList.add('flex');
+      }
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => console.log(err));
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    /* ---------------- Web Audio 音效系统 ---------------- */
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    let globalAudioCtx = null;
+
+    function playBeep(freq = 500, type = 'sine', duration = 0.08, vol = 0.05) {
+      try {
+        if (!globalAudioCtx) globalAudioCtx = new AudioContextClass();
+        if (globalAudioCtx.state === 'suspended') globalAudioCtx.resume();
+        const osc = globalAudioCtx.createOscillator();
+        const gain = globalAudioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, globalAudioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, globalAudioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, globalAudioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(globalAudioCtx.destination);
+        osc.start();
+        osc.stop(globalAudioCtx.currentTime + duration);
+      } catch(e) {}
+    }
+
+    function playChord() {
+      [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+        setTimeout(() => playBeep(freq, 'triangle', 0.25, 0.07), idx * 70);
+      });
+    }
+
+
+    /* ==============================================================
+       ==================== SCIENCE CURRICULUM 逻辑 ==================
+       ============================================================== */
+    const BEAN_STAGES = [
+      { day: 1, title: "种子吸水膨胀 (Imbibition)", desc: "绿豆在湿棉花中吸收水分，体积变大，种皮变软准备发芽。", stemHeight: 0, heightCm: 0.0, leaves: 0, cotyledonSpread: 0, rootLength: 5, rootSpread: 0, noteDefault: "种子吸水，外壳胀大变圆，尚未破皮。" },
+      { day: 2, title: "胚根突破种皮 (Germination / Radicle)", desc: "绿豆皮裂开，白色的胚根首先钻出，向下寻找水分。", stemHeight: 8, heightCm: 0.4, leaves: 0, cotyledonSpread: 0, rootLength: 20, rootSpread: 5, noteDefault: "种皮裂开一道小缝，露出白色胚根。" },
+      { day: 3, title: "胚轴开始伸长 (Hypocotyl Elongation)", desc: "白色幼根长出细小根毛，胚轴呈弯钩状向上推动子叶。", stemHeight: 25, heightCm: 1.2, leaves: 0, cotyledonSpread: 2, rootLength: 45, rootSpread: 12, noteDefault: "胚根固定在棉花上，茎部开始向上弯曲拱起。" },
+      { day: 4, title: "拱土脱壳出苗 (Emergence & Shedding)", desc: "胚轴挺拔直立，种皮多数脱落，两片嫩黄绿色的子叶显露出来。", stemHeight: 55, heightCm: 3.0, leaves: 0, cotyledonSpread: 8, rootLength: 70, rootSpread: 22, noteDefault: "绿色种皮脱落，两片子叶张开，幼茎变直。" },
+      { day: 5, title: "子叶张开，真叶初显 (First Foliage Leaves)", desc: "子叶完全展开，中间冒出第一对极细小的嫩绿真叶。", stemHeight: 90, heightCm: 5.2, leaves: 2, cotyledonSpread: 18, rootLength: 95, rootSpread: 35, noteDefault: "子叶张开，顶部露出两片极小真叶！" },
+      { day: 6, title: "茎部迅速伸长 (Rapid Stem Growth)", desc: "在阳光照射下茎部由浅黄转为嫩绿，真叶逐渐舒展。", stemHeight: 135, heightCm: 7.8, leaves: 2, cotyledonSpread: 22, rootLength: 120, rootSpread: 45, noteDefault: "茎部变长明显，颜色翠绿，真叶舒展。" },
+      { day: 7, title: "真叶茁壮，子叶微缩 (Cotyledons Shrivelling)", desc: "子叶养分消耗后开始皱缩，真叶展开进行光合作用。", stemHeight: 180, heightCm: 10.5, leaves: 2, cotyledonSpread: 20, rootLength: 140, rootSpread: 55, noteDefault: "子叶开始变黄萎缩，真叶完全展开。" },
+      { day: 8, title: "第二对嫩叶萌发 (Second Foliage Emerges)", desc: "生长点继续向上，长出新的叶柄及第二对嫩叶。", stemHeight: 225, heightCm: 13.0, leaves: 4, cotyledonSpread: 15, rootLength: 160, rootSpread: 65, noteDefault: "顶部长出新芽，共有4片叶子，侧根繁密。" },
+      { day: 9, title: "根茎叶成熟发育 (Vegetative Stage)", desc: "根系深入基质，叶片受光面积大，植株坚挺。", stemHeight: 260, heightCm: 15.5, leaves: 4, cotyledonSpread: 10, rootLength: 175, rootSpread: 75, noteDefault: "小苗长得挺拔，真叶叶脉清晰可见。" },
+      { day: 10, title: "茂盛小豆苗 (Healthy Seedling)", desc: "绿豆苗深绿茂密，子叶完全萎缩，全靠真叶光合作用。", stemHeight: 290, heightCm: 18.0, leaves: 6, cotyledonSpread: 5, rootLength: 190, rootSpread: 85, noteDefault: "绿豆苗健康茁壮，高约18cm，生机勃勃。" }
+    ];
+
+    let sciDay = 1;
+    let sciHasSun = true;
+    let sciMedium = 'cotton';
+    let sciMuted = false;
+    let sciLogs = [];
+    let sciChartInstance = null;
+
+    function toggleScienceMute() {
+      sciMuted = !sciMuted;
+      document.getElementById('sciAudioIcon').className = sciMuted ? 'fa-solid fa-volume-xmark text-slate-400' : 'fa-solid fa-volume-high text-slate-600';
+    }
+
+    function renderScienceSimulation() {
+      const stage = BEAN_STAGES[sciDay - 1];
+      const actualHeightCm = (stage.heightCm * (sciHasSun ? 1.0 : 0.85)).toFixed(1);
+      const actualLeaves = sciHasSun ? stage.leaves : Math.max(0, stage.leaves - 2);
+
+      document.getElementById('currentDayBadge').innerText = `第 ${sciDay} 天 (Day ${sciDay})`;
+      document.getElementById('stageTitle').innerText = stage.title;
+      document.getElementById('stageDescText').innerText = stage.desc + (sciHasSun ? "" : " (缺乏阳光，豆苗黄化徒长)");
+      document.getElementById('promptDay').innerText = sciDay;
+      document.getElementById('hudHeightVal').innerText = `${actualHeightCm} cm`;
+      document.getElementById('hudLeafVal').innerText = `${actualLeaves} 片`;
+
+      document.getElementById('sciDaySlider').value = sciDay;
+      document.getElementById('prevSciDayBtn').disabled = (sciDay === 1);
+      document.getElementById('nextSciDayBtn').disabled = (sciDay === 10);
+
+      const baseY = 380;
+      const stemLength = stage.stemHeight * (sciHasSun ? 1.0 : 1.1);
+      const topY = baseY - stemLength;
+
+      const stemPath = document.getElementById('stemPath');
+      stemPath.setAttribute('stroke', sciHasSun ? (sciDay > 3 ? '#52b788' : '#95d5b2') : '#fef08a');
+      const curveOffset = sciDay > 2 ? Math.sin(sciDay) * 12 : 0;
+      stemPath.setAttribute('d', `M 250 ${baseY} Q ${250 + curveOffset} ${baseY - (stemLength * 0.5)} 250 ${topY}`);
+
+      const seedGroup = document.getElementById('beanBodyGroup');
+      if (sciDay <= 3) {
+        seedGroup.setAttribute('transform', `translate(0, 0)`);
+        seedGroup.setAttribute('opacity', '1');
+      } else {
+        const liftY = -(stemLength * 0.4);
+        seedGroup.setAttribute('transform', `translate(${curveOffset * 0.5}, ${liftY})`);
+        seedGroup.setAttribute('opacity', sciDay >= 8 ? '0.2' : '0.8');
+      }
+
+      const cotyGroup = document.getElementById('cotyledonsGroup');
+      if (sciDay >= 3) {
+        cotyGroup.setAttribute('opacity', '1');
+        cotyGroup.setAttribute('transform', `translate(0, ${topY - 250})`);
+        const spread = stage.cotyledonSpread;
+        const cotyColor = sciHasSun ? (sciDay >= 7 ? '#d8f3dc' : '#74c69d') : '#fef9c3';
+        document.getElementById('cotyLeft').setAttribute('fill', cotyColor);
+        document.getElementById('cotyRight').setAttribute('fill', cotyColor);
+        document.getElementById('cotyLeft').setAttribute('d', `M 250 250 Q ${250 - spread} ${240 - spread/3} ${250 - spread} 255 Q 245 262 250 252 Z`);
+        document.getElementById('cotyRight').setAttribute('d', `M 250 250 Q ${250 + spread} ${240 - spread/3} ${250 + spread} 255 Q 255 262 250 252 Z`);
+      } else {
+        cotyGroup.setAttribute('opacity', '0');
+      }
+
+      const foliageGroup = document.getElementById('foliageGroup');
+      foliageGroup.innerHTML = '';
+      if (actualLeaves >= 2) {
+        const leafSize = Math.min(30, 10 + sciDay * 2.2);
+        const leaf1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        leaf1.setAttribute('d', `M 250 ${topY} C ${250 - leafSize*1.2} ${topY - 15} ${250 - leafSize*1.5} ${topY - leafSize} 250 ${topY - leafSize*0.6} Z`);
+        leaf1.setAttribute('fill', sciHasSun ? '#40916c' : '#e2e8f0');
+        leaf1.setAttribute('stroke', '#1b4332');
+        const leaf2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        leaf2.setAttribute('d', `M 250 ${topY} C ${250 + leafSize*1.2} ${topY - 15} ${250 + leafSize*1.5} ${topY - leafSize} 250 ${topY - leafSize*0.6} Z`);
+        leaf2.setAttribute('fill', sciHasSun ? '#52b788' : '#f1f5f9');
+        leaf2.setAttribute('stroke', '#1b4332');
+        foliageGroup.appendChild(leaf1);
+        foliageGroup.appendChild(leaf2);
+
+        if (actualLeaves >= 4) {
+          const upperY = topY - (leafSize * 0.5);
+          const leaf3 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          leaf3.setAttribute('d', `M 250 ${upperY} C ${250 - leafSize} ${upperY - 20} ${250 - leafSize*1.2} ${upperY - leafSize*1.1} 250 ${upperY - leafSize*0.7} Z`);
+          leaf3.setAttribute('fill', '#74c69d');
+          leaf3.setAttribute('stroke', '#2d6a4f');
+          const leaf4 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          leaf4.setAttribute('d', `M 250 ${upperY} C ${250 + leafSize} ${upperY - 20} ${250 + leafSize*1.2} ${upperY - leafSize*1.1} 250 ${upperY - leafSize*0.7} Z`);
+          leaf4.setAttribute('fill', '#95d5b2');
+          leaf4.setAttribute('stroke', '#2d6a4f');
+          foliageGroup.appendChild(leaf3);
+          foliageGroup.appendChild(leaf4);
+        }
+      }
+
+      const rootsGroup = document.getElementById('rootsGroup');
+      rootsGroup.innerHTML = '';
+      if (sciDay >= 2) {
+        const rootLen = stage.rootLength;
+        const rootSpread = stage.rootSpread;
+        const mainRoot = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        mainRoot.setAttribute('d', `M 250 ${baseY} Q ${250 + (sciDay % 2 === 0 ? 3 : -3)} ${baseY + rootLen*0.5} 250 ${baseY + Math.min(50, rootLen*0.3)}`);
+        mainRoot.setAttribute('stroke', '#f8fafc');
+        mainRoot.setAttribute('stroke-width', '2.5');
+        rootsGroup.appendChild(mainRoot);
+
+        if (sciDay >= 3) {
+          for (let i = 1; i <= Math.min(6, sciDay); i++) {
+            const sideRoot = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const sideY = baseY + (i * 7);
+            const dir = i % 2 === 0 ? 1 : -1;
+            sideRoot.setAttribute('d', `M 250 ${sideY} Q ${250 + (dir * rootSpread * 0.4)} ${sideY + 5} ${250 + (dir * rootSpread * 0.8)} ${sideY + 12}`);
+            sideRoot.setAttribute('stroke', '#f1f5f9');
+            sideRoot.setAttribute('stroke-width', '1.5');
+            rootsGroup.appendChild(sideRoot);
+          }
+        }
+      }
+
+      syncSciDayToFormPreset();
+    }
+
+    function changeSciDay(delta) {
+      const target = sciDay + delta;
+      if (target >= 1 && target <= 10) {
+        sciDay = target;
+        if (!sciMuted) playBeep(320 + sciDay * 35, 'triangle', 0.1);
+        renderScienceSimulation();
+      }
+    }
+
+    function onSciSliderChange(val) {
+      sciDay = parseInt(val, 10);
+      if (!sciMuted) playBeep(320 + sciDay * 30, 'triangle', 0.06);
+      renderScienceSimulation();
+    }
+
+    function triggerWatering() {
+      if (!sciMuted) playBeep(600, 'sine', 0.25);
+      const rain = document.getElementById('rainEffect');
+      rain.classList.remove('hidden');
+      setTimeout(() => rain.classList.add('hidden'), 1200);
+    }
+
+    function toggleSunlight() {
+      sciHasSun = !sciHasSun;
+      if (!sciMuted) playBeep(sciHasSun ? 520 : 280, 'sine', 0.15);
+      const sunTag = document.getElementById('envSunTag');
+      const shadeOverlay = document.getElementById('shadeOverlay');
+      const skySun = document.getElementById('skySun');
+      const sunBtnText = document.getElementById('sunBtnText');
+
+      if (sciHasSun) {
+        sunTag.innerHTML = '<i class="fa-solid fa-sun text-yellow-500"></i> 充足阳光';
+        sunTag.className = 'px-2.5 py-1 bg-yellow-50 text-yellow-800 rounded-lg border border-yellow-200 flex items-center gap-1';
+        shadeOverlay.classList.add('opacity-0');
+        skySun.classList.remove('scale-0');
+        sunBtnText.innerText = '充足阳光';
+      } else {
+        sunTag.innerHTML = '<i class="fa-solid fa-moon text-indigo-500"></i> 阴暗无光';
+        sunTag.className = 'px-2.5 py-1 bg-indigo-50 text-indigo-800 rounded-lg border border-indigo-200 flex items-center gap-1';
+        shadeOverlay.classList.remove('opacity-0');
+        shadeOverlay.classList.add('opacity-80');
+        skySun.classList.add('scale-0');
+        sunBtnText.innerText = '阴暗无光';
+      }
+      renderScienceSimulation();
+    }
+
+    function toggleMedium() {
+      if (!sciMuted) playBeep(400, 'square', 0.12);
+      sciMedium = (sciMedium === 'cotton') ? 'soil' : 'cotton';
+      const medTag = document.getElementById('envMediumTag');
+      const medRect = document.getElementById('mediumRect');
+      const medLabel = document.getElementById('mediumLabel');
+      const medBtnText = document.getElementById('mediumBtnText');
+
+      if (sciMedium === 'cotton') {
+        medTag.innerHTML = '<i class="fa-solid fa-cubes-stacked"></i> 湿棉花';
+        medRect.setAttribute('fill', 'url(#cottonGrad)');
+        medLabel.textContent = '湿棉花床';
+        medLabel.setAttribute('fill', '#64748b');
+        medBtnText.innerText = '介质: 湿棉花';
+      } else {
+        medTag.innerHTML = '<i class="fa-solid fa-mountain"></i> 营养土';
+        medRect.setAttribute('fill', 'url(#soilGrad)');
+        medLabel.textContent = '培养土壤';
+        medLabel.setAttribute('fill', '#fef08a');
+        medBtnText.innerText = '介质: 营养土';
+      }
+    }
+
+    // 刻度尺拖动初始化
+    (function initRulerDrag() {
+      const ruler = document.getElementById('virtualRuler');
+      let isDragging = false, startX, startY, origX = 24, origY = 32;
+
+      function onStart(e) {
+        isDragging = true;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        startX = clientX - origX;
+        startY = clientY - origY;
+      }
+      function onMove(e) {
+        if (!isDragging) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        origX = Math.max(5, Math.min(360, clientX - startX));
+        origY = Math.max(-50, Math.min(180, clientY - startY));
+        ruler.style.left = `${origX}px`;
+        ruler.style.top = `${origY}px`;
+      }
+      function onEnd() { isDragging = false; }
+
+      ruler.addEventListener('mousedown', onStart);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onEnd);
+      ruler.addEventListener('touchstart', onStart, { passive: true });
+      window.addEventListener('touchmove', onMove, { passive: true });
+      window.addEventListener('touchend', onEnd);
+    })();
+
+    function initSciFormDays() {
+      const select = document.getElementById('formDaySelect');
+      select.innerHTML = '';
+      for (let i = 1; i <= 10; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.text = `第 ${i} 天 (Day ${i})`;
+        select.appendChild(opt);
+      }
+      select.addEventListener('change', function() {
+        sciDay = parseInt(this.value, 10);
+        renderScienceSimulation();
+      });
+    }
+
+    function syncSciDayToFormPreset() {
+      document.getElementById('formDaySelect').value = sciDay;
+      const stage = BEAN_STAGES[sciDay - 1];
+      const actualHeightCm = (stage.heightCm * (sciHasSun ? 1.0 : 0.85)).toFixed(1);
+      const actualLeaves = sciHasSun ? stage.leaves : Math.max(0, stage.leaves - 2);
+
+      const existing = sciLogs.find(l => l.day === sciDay);
+      if (existing) {
+        document.getElementById('formHeightInput').value = existing.height;
+        document.getElementById('formLeavesInput').value = existing.leaves;
+        document.getElementById('formNotesInput').value = existing.notes;
+        document.getElementById('formConditionInput').value = existing.condition;
+      } else {
+        document.getElementById('formHeightInput').value = actualHeightCm;
+        document.getElementById('formLeavesInput').value = actualLeaves;
+        document.getElementById('formNotesInput').value = stage.noteDefault;
+        document.getElementById('formConditionInput').value = `${sciHasSun ? '充足阳光' : '阴暗无光'} / ${sciMedium === 'cotton' ? '湿棉花' : '土壤'}`;
+      }
+    }
+
+    function syncToForm() {
+      syncSciDayToFormPreset();
+      document.getElementById('formHeightInput').focus();
+    }
+
+    function saveSciLogEntry() {
+      const day = parseInt(document.getElementById('formDaySelect').value, 10);
+      const height = parseFloat(document.getElementById('formHeightInput').value) || 0.0;
+      const leaves = parseInt(document.getElementById('formLeavesInput').value, 10) || 0;
+      const condition = document.getElementById('formConditionInput').value;
+      const notes = document.getElementById('formNotesInput').value.trim() || '生长状况良好。';
+
+      const existingIndex = sciLogs.findIndex(item => item.day === day);
+      const record = { day, height, leaves, condition, notes };
+      if (existingIndex >= 0) {
+        sciLogs[existingIndex] = record;
+      } else {
+        sciLogs.push(record);
+        sciLogs.sort((a, b) => a.day - b.day);
+      }
+      try { localStorage.setItem('hk_mung_bean_logs', JSON.stringify(sciLogs)); } catch(e){}
+
+      if (!sciMuted) playBeep(587.33, 'triangle', 0.2);
+      renderSciTable();
+      updateSciChart();
+      checkSciAchievements();
+    }
+
+    function deleteSciLog(day) {
+      sciLogs = sciLogs.filter(l => l.day !== day);
+      try { localStorage.setItem('hk_mung_bean_logs', JSON.stringify(sciLogs)); } catch(e){}
+      renderSciTable();
+      updateSciChart();
+      checkSciAchievements();
+    }
+
+    function renderSciTable() {
+      const tbody = document.getElementById('logTableBody');
+      document.getElementById('recordCount').innerText = sciLogs.length;
+
+      if (sciLogs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">目前尚无记录，点击“填入记录表”新增观察！</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = sciLogs.map(log => `
+        <tr class="hover:bg-sprout-50/60 transition">
+          <td class="p-2 font-bold text-sprout-800">Day ${log.day}</td>
+          <td class="p-2 font-black text-slate-700">${log.height} cm</td>
+          <td class="p-2 font-semibold">${log.leaves} 片</td>
+          <td class="p-2 max-w-[120px] truncate" title="${log.notes}">${log.notes}</td>
+          <td class="p-2 text-center">
+            <button onclick="deleteSciLog(${log.day})" class="text-slate-400 hover:text-red-500 p-1">
+              <i class="fa-regular fa-trash-can"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function resetSciLogs() {
+      if (confirm("确定要清空所有已保存的绿豆实验记录吗？")) {
+        sciLogs = [];
+        try { localStorage.removeItem('hk_mung_bean_logs'); } catch(e){}
+        renderSciTable();
+        updateSciChart();
+        checkSciAchievements();
+      }
+    }
+
+    function switchSciTab(tab) {
+      const formSection = document.getElementById('observationFormSection');
+      const tableView = document.getElementById('tableView');
+      const chartView = document.getElementById('chartView');
+      const tabTableBtn = document.getElementById('tabTableBtn');
+      const tabChartBtn = document.getElementById('tabChartBtn');
+
+      if (tab === 'table') {
+        formSection.classList.remove('hidden');
+        tableView.classList.remove('hidden');
+        chartView.classList.add('hidden');
+        tabTableBtn.className = "px-2.5 py-1 rounded-lg bg-white shadow-xs text-sprout-700";
+        tabChartBtn.className = "px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-700";
+      } else {
+        formSection.classList.add('hidden');
+        tableView.classList.add('hidden');
+        chartView.classList.remove('hidden');
+        tabTableBtn.className = "px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-700";
+        tabChartBtn.className = "px-2.5 py-1 rounded-lg bg-white shadow-xs text-sprout-700";
+        updateSciChart();
+      }
+    }
+
+    function initSciChart() {
+      const ctx = document.getElementById('growthChart').getContext('2d');
+      sciChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['第1天', '第2天', '第3天', '第4天', '第5天', '第6天', '第7天', '第8天', '第9天', '第10天'],
+          datasets: [
+            {
+              label: '植株高度 (cm)',
+              data: [null, null, null, null, null, null, null, null, null, null],
+              borderColor: '#16a34a',
+              backgroundColor: 'rgba(22, 163, 74, 0.1)',
+              borderWidth: 2.5,
+              tension: 0.3,
+              fill: true,
+              yAxisID: 'y'
+            },
+            {
+              label: '真叶数量 (片)',
+              data: [null, null, null, null, null, null, null, null, null, null],
+              borderColor: '#0284c7',
+              backgroundColor: 'rgba(2, 132, 199, 0.05)',
+              borderWidth: 2,
+              borderDash: [4, 4],
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { position: 'left', title: { display: true, text: '高度 (cm)' }, suggestedMax: 20, min: 0 },
+            y1: { position: 'right', title: { display: true, text: '叶数 (片)' }, grid: { drawOnChartArea: false }, suggestedMax: 8, min: 0 }
+          }
+        }
+      });
+    }
+
+    function updateSciChart() {
+      if (!sciChartInstance) return;
+      const heightArr = Array(10).fill(null);
+      const leafArr = Array(10).fill(null);
+      sciLogs.forEach(entry => {
+        if (entry.day >= 1 && entry.day <= 10) {
+          heightArr[entry.day - 1] = entry.height;
+          leafArr[entry.day - 1] = entry.leaves;
+        }
+      });
+      sciChartInstance.data.datasets[0].data = heightArr;
+      sciChartInstance.data.datasets[1].data = leafArr;
+      sciChartInstance.update();
+    }
+
+    function checkSciAchievements() {
+      const badgeIcon = document.getElementById('achievementBadge');
+      const badgeTitle = document.getElementById('badgeTitle');
+      const badgeDesc = document.getElementById('badgeDesc');
+      const badgeLevel = document.getElementById('badgeLevelTag');
+      const count = sciLogs.length;
+
+      if (count >= 7) {
+        badgeIcon.innerText = '🏆';
+        badgeTitle.innerText = '科学探究小院士';
+        badgeDesc.innerText = '太棒了！已完成超过 7 天观察记录！';
+        badgeLevel.innerText = 'Lv. 3 高级';
+      } else if (count >= 3) {
+        badgeIcon.innerText = '🌿';
+        badgeTitle.innerText = '细心绿意园丁';
+        badgeDesc.innerText = '已累积 3 天以上完整记录，继续保持！';
+        badgeLevel.innerText = 'Lv. 2 中级';
+      } else {
+        badgeIcon.innerText = '🌱';
+        badgeTitle.innerText = '小小植物观察员';
+        badgeDesc.innerText = '连续完成 3 天记录即可晋级！';
+        badgeLevel.innerText = 'Lv. 1 初级';
+      }
+    }
+
+    function exportSciCSV() {
+      if (sciLogs.length === 0) {
+        alert("请先记录至少一天的生长数据！");
+        return;
+      }
+      let csv = "\uFEFF观察天数,测量高度(cm),真叶数量(片),种植环境,学生观察笔记\n";
+      sciLogs.forEach(row => {
+        csv += `第${row.day}天,${row.height},${row.leaves},"${row.condition}","${row.notes.replace(/"/g, '""')}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `绿豆生长观察记录表.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function openKnowledgeModal() {
+      document.getElementById('knowledgeModal').classList.remove('hidden');
+      document.getElementById('knowledgeModal').classList.add('flex');
+    }
+    function closeKnowledgeModal() {
+      document.getElementById('knowledgeModal').classList.add('hidden');
+      document.getElementById('knowledgeModal').classList.remove('flex');
+    }
+
+
+    /* ==============================================================
+       ==================== 课堂抽答与积分排行榜 逻辑 =================
+       ============================================================== */
+    let studentList = [];          // 全部学生列表 [{ id: '01', name: '李明', score: 0, count: 0 }]
+    let candidatePool = [];        // 当前待抽池
+    let isRolling = false;
+    let rollTimer = null;
+    let currentSelectedStudent = null;
+    let answerHistory = [];        // 问答明细日志
+
+    // 处理 Excel 上传
+    function handleExcelUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+          if (!jsonData || jsonData.length === 0) {
+            alert("Excel 表格为空！");
+            return;
+          }
+
+          let idColIndex = -1;
+          let nameColIndex = -1;
+          let startRow = 0;
+
+          // 探测首行表头
+          const headerRow = jsonData[0];
+          if (headerRow && Array.isArray(headerRow)) {
+            headerRow.forEach((cell, idx) => {
+              if (!cell) return;
+              const text = String(cell).trim();
+              if (text.includes("学号") || text.toLowerCase().includes("id") || text.includes("编号")) idColIndex = idx;
+              if (text.includes("姓名") || text.toLowerCase().includes("name") || text.includes("名字") || text.includes("学生")) nameColIndex = idx;
+            });
+            if (idColIndex !== -1 || nameColIndex !== -1) startRow = 1;
+          }
+
+          // 缺省策略
+          if (nameColIndex === -1 && idColIndex === -1) {
+            if (jsonData[0].length >= 2) { idColIndex = 0; nameColIndex = 1; }
+            else { nameColIndex = 0; }
+          } else if (nameColIndex === -1 && idColIndex !== -1) {
+            nameColIndex = (idColIndex === 0) ? 1 : 0;
+          }
+
+          const parsed = [];
+          for (let r = startRow; r < jsonData.length; r++) {
+            const row = jsonData[r];
+            if (!row || row.length === 0) continue;
+            let name = nameColIndex !== -1 && row[nameColIndex] ? String(row[nameColIndex]).trim() : '';
+            let sid = idColIndex !== -1 && row[idColIndex] ? String(row[idColIndex]).trim() : '';
+
+            if (!name && sid) { name = sid; sid = ''; }
+            if (name) {
+              parsed.push({
+                id: sid || String(parsed.length + 1).padStart(2, '0'),
+                name: name,
+                score: 0,
+                count: 0
+              });
+            }
+          }
+
+          if (parsed.length === 0) {
+            alert("未在 Excel 中识别出有效的学生姓名！");
+            return;
+          }
+
+          studentList = parsed;
+          candidatePool = [...studentList];
+          updateRosterUI();
+          renderLeaderboard();
+          playChord();
+          alert(`成功导入 ${studentList.length} 位学生名单！`);
+        } catch (err) {
+          console.error(err);
+          alert("读取 Excel 文件失败，请检查文件格式。");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      event.target.value = '';
+    }
+
+    // 下载标准 Excel 模板
+    function downloadSampleExcel() {
+      const sampleData = [
+        ["学号", "姓名"],
+        ["01", "陈子乐"],
+        ["02", "李嘉欣"],
+        ["03", "张浩然"],
+        ["04", "黄思晴"],
+        ["05", "王睿泽"]
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(sampleData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "学生名单");
+      XLSX.writeFile(wb, "学生名单标准导入模板.xlsx");
+    }
+
+    // 加载 30 人示例班级
+    function loadSampleClass() {
+      const names = [
+        "黄俊杰", "陈梓萱", "张子扬", "李乐诗", "刘宇轩", "何思源", "林晓晴", "赵卓尔", 
+        "梁家豪", "许家宝", "郭沛仪", "曾敬轩", "麦芷晴", "郑浩天", "谢雨桐", "冯浩然", 
+        "杨卓霖", "蔡明轩", "罗子茵", "唐家成", "欧阳浩", "苏锦荣", "邓佩珊", "钟志强", 
+        "温紫涵", "彭俊逸", "关慧敏", "范伟杰", "戴嘉成", "黎梓晴"
+      ];
+      studentList = names.map((name, idx) => ({
+        id: String(idx + 1).padStart(2, '0'),
+        name: name,
+        score: 0,
+        count: 0
+      }));
+      candidatePool = [...studentList];
+      updateRosterUI();
+      renderLeaderboard();
+      playChord();
+    }
+
+    function updateRosterUI() {
+      document.getElementById('studentCountBadge').innerText = `共 ${studentList.length} 人`;
+      document.getElementById('remainCountText').innerText = `剩余: ${candidatePool.length} 人`;
+
+      const listContainer = document.getElementById('rosterPreviewList');
+      if (studentList.length === 0) {
+        listContainer.innerHTML = `<div class="text-center text-slate-600 py-6">暂无名单，请上传 Excel 或加载示例班级</div>`;
+        return;
+      }
+      listContainer.innerHTML = studentList.map(s => `
+        <div class="flex items-center justify-between p-1.5 rounded bg-slate-850 hover:bg-slate-800 text-slate-300">
+          <span class="font-mono text-indigo-400 font-bold">${s.id}</span>
+          <span class="font-medium text-white">${s.name}</span>
+          <span class="text-[10px] text-amber-400 font-bold">${s.score} 分</span>
+        </div>
+      `).join('');
+    }
+
+    function resetRosterPool() {
+      if (studentList.length === 0) return;
+      candidatePool = [...studentList];
+      document.getElementById('remainCountText').innerText = `剩余: ${candidatePool.length} 人`;
+      playBeep(440, 'triangle', 0.1);
+      alert("本轮抽选候选池已重置！");
+    }
+
+    // 抽选核心控制：开始与停止
+    function startRolling() {
+      if (studentList.length === 0) {
+        alert("请先导入或加载学生名单！");
+        return;
+      }
+      const noRepeat = document.getElementById('noRepeatToggle').checked;
+      if (noRepeat && candidatePool.length === 0) {
+        alert("本轮名单已全部抽选完毕！点击‘重置轮次’可重新开始。");
+        return;
+      }
+
+      isRolling = true;
+      document.getElementById('startRollBtn').disabled = true;
+      document.getElementById('stopRollBtn').disabled = false;
+      document.getElementById('pickStatusTag').innerText = "抽取中... 点击【停止】锁定";
+      document.getElementById('pickStatusTag').className = "mt-4 text-xs px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full font-bold animate-pulse";
+
+      const currentPool = noRepeat ? candidatePool : studentList;
+
+      // 滚动循环
+      rollTimer = setInterval(() => {
+        const randIdx = Math.floor(Math.random() * currentPool.length);
+        const tempStudent = currentPool[randIdx];
+        document.getElementById('pickIdDisplay').innerText = `NO. ${tempStudent.id}`;
+        document.getElementById('pickNameDisplay').innerText = tempStudent.name;
+        playBeep(400 + Math.random() * 200, 'sine', 0.04, 0.03);
+      }, 55);
+    }
+
+    function stopRolling() {
+      if (!isRolling) return;
+      clearInterval(rollTimer);
+      isRolling = false;
+
+      document.getElementById('startRollBtn').disabled = false;
+      document.getElementById('stopRollBtn').disabled = true;
+
+      const noRepeat = document.getElementById('noRepeatToggle').checked;
+      const currentPool = noRepeat ? candidatePool : studentList;
+
+      // 终选定格
+      const finalIdx = Math.floor(Math.random() * currentPool.length);
+      currentSelectedStudent = currentPool[finalIdx];
+
+      document.getElementById('pickIdDisplay').innerText = `NO. ${currentSelectedStudent.id}`;
+      document.getElementById('pickNameDisplay').innerText = currentSelectedStudent.name;
+      document.getElementById('pickStatusTag').innerText = "🎉 抽选中！请回答问题";
+      document.getElementById('pickStatusTag').className = "mt-4 text-xs px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full font-bold";
+
+      if (noRepeat) {
+        candidatePool.splice(finalIdx, 1);
+        document.getElementById('remainCountText').innerText = `剩余: ${candidatePool.length} 人`;
+      }
+
+      // 彩带庆祝
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.6 }
+      });
+      playChord();
+
+      // 激活右侧评分面板
+      activateStudentScoring(currentSelectedStudent);
+    }
+
+    // 激活问答评分面板
+    function activateStudentScoring(student) {
+      document.getElementById('activeStudentName').innerText = student.name;
+      document.getElementById('activeStudentId').innerText = `学号: ${student.id} (当前积分: ${student.score})`;
+      document.getElementById('saveScoreBtn').disabled = false;
+      document.getElementById('questionInput').focus();
+    }
+
+    function fillPresetQuestion(text) {
+      document.getElementById('questionInput').value = text;
+    }
+
+    function setScoreValue(val) {
+      document.getElementById('scoreInput').value = val;
+    }
+
+    function saveActiveAnswerScore() {
+      if (!currentSelectedStudent) return;
+      const score = parseInt(document.getElementById('scoreInput').value, 10) || 0;
+      const question = document.getElementById('questionInput').value.trim() || '随堂课堂提问';
+
+      // 累加总分和次数
+      currentSelectedStudent.score += score;
+      currentSelectedStudent.count += 1;
+
+      // 记录明细流水
+      const logRecord = {
+        time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        id: currentSelectedStudent.id,
+        name: currentSelectedStudent.name,
+        question: question,
+        score: score
+      };
+      answerHistory.unshift(logRecord);
+
+      renderLeaderboard();
+      renderAnswerHistory();
+      updateRosterUI();
+
+      playBeep(784, 'triangle', 0.2, 0.08);
+
+      // 清空或提示
+      document.getElementById('activeStudentId').innerText = `学号: ${currentSelectedStudent.id} (当前积分: ${currentSelectedStudent.score})`;
+      document.getElementById('questionInput').value = '';
+      alert(`已为【${currentSelectedStudent.name}】记录 ${score >= 0 ? '+' + score : score} 分！`);
+    }
+
+    function renderLeaderboard() {
+      const tbody = document.getElementById('leaderboardTbody');
+      if (studentList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-600">暂无名单数据！</td></tr>`;
+        return;
+      }
+
+      // 按得分从高到低排序，若得分相同按学号排
+      const sorted = [...studentList].sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+
+      tbody.innerHTML = sorted.map((s, index) => {
+        let rankBadge = `<span class="font-bold text-slate-400">${index + 1}</span>`;
+        if (index === 0 && s.score > 0) rankBadge = `<span class="text-base">🥇</span>`;
+        else if (index === 1 && s.score > 0) rankBadge = `<span class="text-base">🥈</span>`;
+        else if (index === 2 && s.score > 0) rankBadge = `<span class="text-base">🥉</span>`;
+
+        return `
+          <tr class="hover:bg-slate-800/60 transition ${index < 3 && s.score > 0 ? 'bg-indigo-950/20' : ''}">
+            <td class="p-3 text-center">${rankBadge}</td>
+            <td class="p-3 font-mono text-indigo-400 font-bold">${s.id}</td>
+            <td class="p-3 font-black text-white">${s.name}</td>
+            <td class="p-3 text-center text-slate-400">${s.count} 次</td>
+            <td class="p-3 text-right font-black text-amber-400 text-sm">${s.score}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderAnswerHistory() {
+      const container = document.getElementById('answerHistoryList');
+      if (answerHistory.length === 0) {
+        container.innerHTML = `<div class="text-center text-slate-600 py-8">尚无问答明细记录</div>`;
+        return;
+      }
+      container.innerHTML = answerHistory.map(item => `
+        <div class="p-2.5 rounded-xl bg-slate-850 border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-indigo-400 text-[10px]">${item.id}</span>
+              <strong class="text-white">${item.name}</strong>
+              <span class="text-[10px] text-slate-500">${item.time}</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-0.5">${item.question}</p>
+          </div>
+          <span class="font-black text-xs px-2 py-1 rounded-lg ${item.score >= 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}">
+            ${item.score >= 0 ? '+' + item.score : item.score}
+          </span>
+        </div>
+      `).join('');
+    }
+
+    function exportLeaderboardExcel() {
+      if (studentList.length === 0) {
+        alert("尚无学生名单可导出！");
+        return;
+      }
+      const sorted = [...studentList].sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+      const boardData = [["名次", "学号", "姓名", "回答次数", "累计总分"]];
+      sorted.forEach((s, idx) => {
+        boardData.push([idx + 1, s.id, s.name, s.count, s.score]);
+      });
+
+      const historyData = [["时间", "学号", "姓名", "问题或表现", "得分"]];
+      answerHistory.forEach(h => {
+        historyData.push([h.time, h.id, h.name, h.question, h.score]);
+      });
+
+      const wb = XLSX.utils.book_new();
+      const ws1 = XLSX.utils.aoa_to_sheet(boardData);
+      const ws2 = XLSX.utils.aoa_to_sheet(historyData);
+      XLSX.utils.book_append_sheet(wb, ws1, "课堂总积分榜");
+      XLSX.utils.book_append_sheet(wb, ws2, "问答详细流水");
+      XLSX.writeFile(wb, `课堂积分排行榜_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    function confirmResetScores() {
+      if (confirm("确定要清空全班所有积分与回答历史记录吗？")) {
+        studentList.forEach(s => { s.score = 0; s.count = 0; });
+        answerHistory = [];
+        renderLeaderboard();
+        renderAnswerHistory();
+        updateRosterUI();
+        if (currentSelectedStudent) {
+          document.getElementById('activeStudentId').innerText = `学号: ${currentSelectedStudent.id} (当前积分: 0)`;
+        }
+      }
+    }
+
+    // 空格键快捷操作抽答
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        // 如果焦点在输入框中则不触发
+        const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+        if (tag === 'input' || tag === 'textarea') return;
+
+        // 如果在抽选界面
+        if (!document.getElementById('viewPicker').classList.contains('hidden')) {
+          e.preventDefault();
+          if (!isRolling) startRolling();
+          else stopRolling();
+        }
+      }
+    });
+
+    // 页面初始化
+    window.addEventListener('DOMContentLoaded', () => {
+      initSciFormDays();
+      initSciChart();
+
+      try {
+        const stored = localStorage.getItem('hk_mung_bean_logs');
+        if (stored) sciLogs = JSON.parse(stored);
+      } catch (e) {}
+
+      if (sciLogs.length === 0) {
+        sciLogs.push({
+          day: 1,
+          height: 0.0,
+          leaves: 0,
+          condition: "充足阳光 / 湿棉花",
+          notes: "绿豆吸足水分后外皮肿胀变大，种皮软化，准备萌发。"
+        });
+      }
+
+      renderScienceSimulation();
+      renderSciTable();
+      updateSciChart();
+      checkSciAchievements();
+
+      // 默认加载示例班级
+      loadSampleClass();
+    });
+  </script>
+</body>
+</html>
